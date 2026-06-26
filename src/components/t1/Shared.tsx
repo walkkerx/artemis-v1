@@ -18,10 +18,12 @@ interface NavBarProps {
 export function NavBar({ currentPage, goTo, onExit }: NavBarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isExploreOpen, setIsExploreOpen] = useState(false);
+  const [isJourneyOpen, setIsJourneyOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   const dimensionSlugs = ['open-loop-learning', 'adaptive-paced-learning', 'global-skills-matrix', 'purpose-learning', 'centers-of-inquiry', 'darwin-voyage'];
   const isExplorePath = dimensionSlugs.includes(currentPage);
+  const isJourneyPath = currentPage === 'journey' || currentPage === 'journey-v2';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -63,12 +65,47 @@ export function NavBar({ currentPage, goTo, onExit }: NavBarProps) {
           >
             Home
           </button>
-          <button
-            onClick={() => goTo('journey')}
-            className={cn("hover:opacity-100 transition-opacity cursor-pointer text-[#D4A853]", currentPage === 'journey' && "text-gray-900")}
+          <div
+            className="relative cursor-pointer"
+            onMouseEnter={() => { setIsJourneyOpen(true); setIsExploreOpen(false); }}
+            onMouseLeave={() => setIsJourneyOpen(false)}
           >
-            The Journey
-          </button>
+            <span className={cn("flex items-center gap-1 hover:opacity-100 transition-opacity", isJourneyPath && "text-gray-900")}>
+              The Journey <ChevronDown className="w-3 h-3" />
+            </span>
+            {isJourneyOpen && (
+              <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3">
+                <div className="bg-white border border-gray-100 shadow-2xl shadow-black/10 flex flex-col min-w-[260px] overflow-hidden">
+                  <button
+                    onClick={() => { goTo('journey'); setIsJourneyOpen(false); }}
+                    className={cn(
+                      "px-6 py-3.5 hover:bg-gray-50 transition-colors text-[11px] text-left cursor-pointer flex items-center gap-4 border-b border-gray-50",
+                      currentPage === 'journey' ? "text-gray-900 font-bold" : "text-gray-500"
+                    )}
+                  >
+                    <span className="text-[9px] font-mono text-gray-300 w-8">v1</span>
+                    <div>
+                      <div className="font-bold">The Narrative</div>
+                      <div className="text-[9px] text-gray-400 normal-case tracking-normal font-normal mt-0.5">Linear scroll · 4 acts · 24 steps</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => { goTo('journey-v2'); setIsJourneyOpen(false); }}
+                    className={cn(
+                      "px-6 py-3.5 hover:bg-gray-50 transition-colors text-[11px] text-left cursor-pointer flex items-center gap-4",
+                      currentPage === 'journey-v2' ? "text-gray-900 font-bold" : "text-gray-500"
+                    )}
+                  >
+                    <span className="text-[9px] font-mono text-[#D4A853] w-8">v2</span>
+                    <div>
+                      <div className="font-bold">Choose Your Path</div>
+                      <div className="text-[9px] text-gray-400 normal-case tracking-normal font-normal mt-0.5">Interactive · 7 decisions · live stats</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           <div
             className="relative cursor-pointer"
             onMouseEnter={() => setIsExploreOpen(true)}
@@ -114,7 +151,8 @@ export function NavBar({ currentPage, goTo, onExit }: NavBarProps) {
       {isMobileMenuOpen && (
         <div className="w-full bg-white shadow-xl shadow-black/10 flex flex-col p-6 md:hidden gap-1 text-xs font-bold tracking-[0.2em] uppercase text-gray-500">
            <button onClick={() => { goTo('home'); setIsMobileMenuOpen(false); }} className="py-3 text-left">Home</button>
-           <button onClick={() => { goTo('journey'); setIsMobileMenuOpen(false); }} className="py-3 text-left text-[#D4A853]">The Journey</button>
+           <button onClick={() => { goTo('journey'); setIsMobileMenuOpen(false); }} className="py-3 text-left text-[#D4A853]">The Journey v1 — Narrative</button>
+           <button onClick={() => { goTo('journey-v2'); setIsMobileMenuOpen(false); }} className="py-3 text-left text-[#D4A853]">The Journey v2 — Choose Your Path</button>
            <div className="py-3">
               <span className="text-gray-900">Dimensions</span>
            </div>

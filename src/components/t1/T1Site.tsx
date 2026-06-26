@@ -12,6 +12,7 @@ import DarwinVoyagePage from './pages/DarwinVoyagePage';
 import BuildPage from './pages/BuildPage';
 import AboutPage from './pages/AboutPage';
 import JourneyPage from './pages/JourneyPage';
+import JourneyV2Page from './pages/JourneyV2Page';
 
 interface T1SiteProps {
   onExit: () => void;
@@ -21,6 +22,8 @@ function T1PageContent({ page, goTo }: { page: string; goTo: (p: string) => void
   switch (page) {
     case 'journey':
       return <JourneyPage goTo={goTo} />;
+    case 'journey-v2':
+      return <JourneyV2Page goTo={goTo} />;
     case 'open-loop-learning':
       return <OpenLoopPage goTo={goTo} />;
     case 'adaptive-paced-learning':
