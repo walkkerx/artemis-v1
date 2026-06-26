@@ -28,6 +28,7 @@ import ProgramsOfStudy from '@/components/artemis/ProgramsOfStudy';
 
 import ProgramDetail from '@/components/artemis/ProgramDetail';
 import GraduatePrograms from '@/components/artemis/GraduatePrograms';
+import PrototypePathways from '@/components/artemis/PrototypePathways';
 import Apply from '@/components/artemis/Apply';
 import SchoolDetail from '@/components/artemis/SchoolDetail';
 import AdmissionsSubpage from '@/components/artemis/AdmissionsSubpage';
@@ -97,6 +98,21 @@ function getBreadcrumbs(currentPage: string, currentProgram: string): { items: B
           { label: 'Education', page: 'education' },
         ],
         currentLabel: 'Programs of Study',
+      };
+    case 'prototype-pathways':
+      return {
+        items: [
+          { label: 'Education', page: 'education' },
+        ],
+        currentLabel: 'Prototype Pathways',
+      };
+    case 'prototype-detail':
+      return {
+        items: [
+          { label: 'Education', page: 'education' },
+          { label: 'Prototype Pathways', page: 'prototype-pathways' },
+        ],
+        currentLabel: 'Prototype Detail',
       };
     case 'centers-of-inquiry':
       return {
@@ -459,6 +475,10 @@ export default function ArtemisApp() {
         return <ProgramsOfStudy goToPage={goToPage} />;
       case 'program_detail':
         return <ProgramDetail goToPage={goToPage} programName={currentProgram} />;
+      case 'prototype-pathways':
+        return <PrototypePathways goToPage={goToPage} />;
+      case 'prototype-detail':
+        return <PrototypePathways goToPage={goToPage} prototypeId={currentProgram} />;
       case 'school_detail':
         return <SchoolDetail goToPage={goToPage} schoolName={currentProgram} />;
       case 'apply':

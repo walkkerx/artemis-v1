@@ -74,6 +74,13 @@ const academicPrograms = [
     linkText: 'Explore Dual-Degree',
     linkTarget: 'admissions',
   },
+  {
+    title: 'Prototype Pathways',
+    description: 'Nine market-entry prototypes for building Artemis — modular, stackable strategies that activate the MAP-UBI flywheel. From Guest-to-Guild recruiting to Guild-as-Miniversity, the Collegiate Alliance, and the Open Core + Capstone model.',
+    image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=600',
+    linkText: 'Explore Prototype Pathways',
+    linkTarget: 'prototype-pathways',
+  },
 ];
 
 const educationStats = [
