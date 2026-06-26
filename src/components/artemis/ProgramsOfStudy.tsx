@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import SubPageFooter from '@/components/artemis/SubPageFooter';
 import OnThisPageNav, { useActiveSection } from '@/components/artemis/OnThisPageNav';
 import { schoolSections } from '@/lib/programs-data';
+import {
+  Atom, Cpu, Palette, Users, HeartPulse, GraduationCap, Briefcase,
+  Search, X, ArrowRight, Layers, Sparkles, TrendingUp
+} from 'lucide-react';
 
 interface ProgramsOfStudyProps {
   goToPage: (page: string, program?: string) => void;
@@ -17,443 +21,573 @@ function useInView(threshold = 0.15) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setVisible(true);
-          obs.unobserve(el);
-        }
-      },
-      { threshold }
-    );
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } }, { threshold });
     obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
   return { ref, visible };
 }
 
-/* schoolSections is imported from @/lib/programs-data (single source of truth) */
+/* ─── School icons ─── */
+const SCHOOL_ICONS: Record<string, React.ElementType> = {
+  'school-natural-sciences': Atom,
+  'school-engineering-technology': Cpu,
+  'school-arts-humanities': Palette,
+  'school-social-sciences': Users,
+  'school-health-medicine': HeartPulse,
+  'school-education-human-development': GraduationCap,
+  'school-business': Briefcase,
+};
 
-/* Count total majors */
 const TOTAL_MAJORS = schoolSections.reduce((sum, s) => sum + s.majors.length, 0);
 
-/* Degree filter options */
-const DEGREE_FILTERS = [
-  { value: 'all', label: 'All Degrees' },
-  { value: 'B.A.', label: 'Bachelor of Arts (B.A.)' },
-  { value: 'B.S.', label: 'Bachelor of Science (B.S.)' },
-  { value: 'B.F.A.', label: 'Bachelor of Fine Arts (B.F.A.)' },
-];
+/* Degree type colors */
+const DEGREE_COLORS: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+  'B.S.': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', dot: 'bg-blue-500' },
+  'B.A.': { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', dot: 'bg-emerald-500' },
+  'B.F.A.': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', dot: 'bg-purple-500' },
+};
+
+function getDegree(major: string): string {
+  if (major.includes('B.S.')) return 'B.S.';
+  if (major.includes('B.F.A.')) return 'B.F.A.';
+  if (major.includes('B.A.')) return 'B.A.';
+  return 'Degree';
+}
+
+function cleanMajor(major: string): string {
+  return major.replace(' (B.S.)', '').replace(' (B.A.)', '').replace(' (B.F.A.)', '');
+}
 
 export default function ProgramsOfStudy({ goToPage }: ProgramsOfStudyProps) {
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
-
   const heroAnim = useInView();
   const introAnim = useInView();
+
+  const [activeSchoolId, setActiveSchoolId] = useState(schoolSections[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const [degreeFilter, setDegreeFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<'mosaic' | 'list'>('mosaic');
 
-  const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
-  const [isComparing, setIsComparing] = useState(false);
+  const activeSchool = schoolSections.find(s => s.id === activeSchoolId) || schoolSections[0];
+  const ActiveIcon = SCHOOL_ICONS[activeSchoolId] || Sparkles;
 
-  const toggleCompare = (major: string) => {
-    if (selectedPrograms.includes(major)) {
-      setSelectedPrograms(selectedPrograms.filter(p => p !== major));
-    } else {
-      if (selectedPrograms.length < 3) {
-        setSelectedPrograms([...selectedPrograms, major]);
-      } else {
-        alert("You can only compare up to 3 programs at once.");
-      }
-    }
-  };
-
-  const catalogNav = [
-    "The Undergraduate Curriculum",
-    "Academic Regulations",
-    "Majors by Disciplines",
-    "Majors in Artemis College",
-    "Major Roadmaps",
-    "Certificates in Artemis College",
-    "Artemis College and Departmental Attributes",
-    "Subjects of Instruction",
-    "General Information"
-  ];
-
-  const sectionIds = schoolSections.map(s => s.id);
-  const activeSection = useActiveSection(sectionIds);
-
-  /* Filter logic */
-  const filteredSections = useMemo(() => {
+  /* Filtered majors for the active school */
+  const filteredMajors = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    return schoolSections.map(section => {
-      const filteredMajors = section.majors.filter(major => {
-        const matchesSearch = !q || major.toLowerCase().includes(q);
-        const matchesDegree = degreeFilter === 'all' || major.includes(degreeFilter);
-        return matchesSearch && matchesDegree;
-      });
-      return { ...section, filteredMajors };
-    }).filter(section => section.filteredMajors.length > 0);
+    return activeSchool.majors.filter(major => {
+      const matchesSearch = !q || major.toLowerCase().includes(q);
+      const matchesDegree = degreeFilter === 'all' || major.includes(degreeFilter);
+      return matchesSearch && matchesDegree;
+    });
+  }, [activeSchool, searchQuery, degreeFilter]);
+
+  /* Global search results (when searching across all schools) */
+  const globalResults = useMemo(() => {
+    if (!searchQuery.trim()) return null;
+    const q = searchQuery.toLowerCase().trim();
+    return schoolSections.map(s => ({
+      ...s,
+      matches: s.majors.filter(m => m.toLowerCase().includes(q) && (degreeFilter === 'all' || m.includes(degreeFilter))),
+    })).filter(s => s.matches.length > 0);
   }, [searchQuery, degreeFilter]);
 
-  const totalResults = filteredSections.reduce((sum, s) => sum + s.filteredMajors.length, 0);
+  /* Degree distribution for the constellation */
+  const degreeStats = useMemo(() => {
+    const counts: Record<string, number> = { 'B.S.': 0, 'B.A.': 0, 'B.F.A.': 0 };
+    schoolSections.forEach(s => s.majors.forEach(m => {
+      const d = getDegree(m);
+      if (counts[d] !== undefined) counts[d]++;
+    }));
+    return counts;
+  }, []);
+
+  const totalFiltered = globalResults?.reduce((sum, s) => sum + s.matches.length, 0) || filteredMajors.length;
 
   return (
     <div className="flex flex-col bg-white">
-      {/* ── Hero Section ── */}
+      {/* ── Hero ── */}
       <section className="relative w-full overflow-hidden">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="relative w-full h-[45vh] min-h-[360px] overflow-hidden">
-            <motion.img
-              src="https://images.unsplash.com/photo-1594750852563-5ed8e0421d40?auto=format&fit=crop&q=80&w=1800"
-              alt="Programs of Study"
-              style={{ y: heroY }}
-              className="absolute inset-x-0 -top-[20%] w-full h-[140%] object-cover grayscale"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-            <div className="relative z-10 flex flex-col justify-end h-full max-w-[1400px] mx-auto w-full px-8 lg:px-20 pb-16">
-              <div
-                ref={heroAnim.ref}
-                className={`transition-all duration-700 ${heroAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-              >
-                <div className="mb-8 flex items-center space-x-3">
-                  <span className="w-8 h-[1px] bg-[#8A0000]"></span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">Academic Catalogue</span>
-                </div>
-                <h1 className="text-[30px] sm:text-[44px] md:text-[56px] font-extrabold leading-[1.05] tracking-tighter text-white mb-6">
-                  Artemis College <br className="hidden sm:inline" />
-                  Programs of Study <span className="text-white/60">2026–2027</span>
-                </h1>
-                <p className="text-[18px] text-white/70 max-w-xl leading-relaxed font-light">
-                  A complete catalogue of undergraduate majors offered by Artemis College — seven schools, sixty-plus degree programmes, one unified standard of excellence.
-                </p>
+        <div className="relative w-full h-[52vh] min-h-[400px] overflow-hidden">
+          <motion.img
+            src="https://images.unsplash.com/photo-1594750852563-5ed8e0421d40?auto=format&fit=crop&q=80&w=1800"
+            alt="Programs of Study"
+            style={{ y: heroY }}
+            className="absolute inset-x-0 -top-[20%] w-full h-[140%] object-cover grayscale"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="relative z-10 flex flex-col justify-end h-full max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 pb-16">
+            <div ref={heroAnim.ref} className={`transition-all duration-700 ${heroAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="mb-8 flex items-center space-x-3">
+                <span className="w-8 h-[1px] bg-[#8A0000]"></span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">Academic Catalogue 2026–2027</span>
               </div>
+              <h1 className="text-[36px] sm:text-[48px] md:text-[60px] font-extrabold leading-[1.02] tracking-tighter text-white mb-6">
+                Programs of Study
+              </h1>
+              <p className="text-[18px] text-white/70 max-w-2xl leading-relaxed font-light">
+                Seven schools. Sixty-plus degree programmes. One unified standard of excellence. Explore the full Artemis College catalogue — browse by school, filter by degree, or search across everything.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── On This Page Navigation ── */}
       <OnThisPageNav
-        sections={schoolSections.map(s => ({ id: s.id, label: s.label }))}
-        activeSection={activeSection}
+        sections={[
+          { id: 'explorer', label: 'Explorer' },
+          { id: 'constellation', label: 'Degree Breakdown' },
+        ]}
+        activeSection="explorer"
       />
 
+      {/* ── Degree Constellation ── */}
+      <section id="constellation" className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 py-12 lg:py-16 scroll-mt-32">
+        <div ref={introAnim.ref} className={`transition-all duration-700 ${introAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6 mb-8">
+            <div>
+              <div className="mb-3 flex items-center space-x-3">
+                <span className="w-8 h-[1px] bg-[#8A0000]"></span>
+                <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">The Catalogue at a Glance</span>
+              </div>
+              <h2 className="text-[28px] md:text-[36px] font-extrabold leading-[1.05] tracking-tighter text-[#141414]">
+                {TOTAL_MAJORS} programs across 7 schools
+              </h2>
+            </div>
+            {/* Quick stats */}
+            <div className="flex gap-6">
+              <div className="text-center">
+                <div className="text-[28px] font-black text-[#8A0000] leading-none">{schoolSections.length}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">Schools</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[28px] font-black text-[#8A0000] leading-none">3</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">Degree Types</div>
+              </div>
+              <div className="text-center">
+                <div className="text-[28px] font-black text-[#8A0000] leading-none">35+</div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-gray-500 mt-1">Countries</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Degree type bars */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {Object.entries(degreeStats).map(([degree, count]) => {
+              const colors = DEGREE_COLORS[degree];
+              const pct = Math.round((count / TOTAL_MAJORS) * 100);
+              return (
+                <div key={degree} className={`rounded-xl border p-5 ${colors.bg} ${colors.border}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${colors.dot}`}></span>
+                      <span className={`text-[14px] font-bold ${colors.text}`}>{degree}</span>
+                    </div>
+                    <span className={`text-[24px] font-black ${colors.text}`}>{count}</span>
+                  </div>
+                  <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
+                    <motion.div
+                      className={`h-full rounded-full ${colors.dot}`}
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${pct}%` }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                    />
+                  </div>
+                  <div className="text-[10px] font-mono text-gray-500 mt-1.5">{pct}% of all programs</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ── Search & Filter Bar ── */}
-      <section className="bg-white border-b border-gray-200 sticky top-[102px] z-20">
-        <div className="max-w-[1400px] mx-auto w-full px-8 lg:px-20 py-5">
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-            {/* Search Input */}
-            <div className="relative flex-1 w-full sm:max-w-md">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      <section id="explorer" className="bg-white border-y border-gray-200 sticky top-[102px] z-20 scroll-mt-32">
+        <div className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 py-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search programs..."
+                placeholder="Search all programs..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#8A0000]/20 focus:border-[#8A0000] transition-all bg-white"
+                className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-lg text-[14px] focus:outline-none focus:ring-2 focus:ring-[#8A0000]/20 focus:border-[#8A0000] transition-all bg-white"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center hover:bg-gray-300 transition-colors"
                 >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg>
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
 
-            {/* Degree Filter */}
+            {/* Degree filter */}
             <div className="flex items-center gap-2">
-              {DEGREE_FILTERS.map((filter) => (
+              <button
+                onClick={() => setDegreeFilter('all')}
+                className={`px-3 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg border transition-all ${degreeFilter === 'all' ? 'bg-[#8A0000] text-white border-[#8A0000]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#8A0000]'}`}
+              >
+                All
+              </button>
+              {Object.entries(DEGREE_COLORS).map(([degree, colors]) => (
                 <button
-                  key={filter.value}
-                  onClick={() => setDegreeFilter(filter.value)}
-                  className={`px-3.5 py-2 text-[12px] font-bold uppercase tracking-wider rounded-lg border transition-all ${
-                    degreeFilter === filter.value
-                      ? 'bg-[#8A0000] text-white border-[#8A0000]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#8A0000] hover:text-[#8A0000]'
-                  }`}
+                  key={degree}
+                  onClick={() => setDegreeFilter(degree)}
+                  className={`px-3 py-2 text-[11px] font-bold uppercase tracking-wider rounded-lg border transition-all flex items-center gap-1.5 ${degreeFilter === degree ? `${colors.bg} ${colors.text} ${colors.border}` : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`}
                 >
-                  {filter.value === 'all' ? 'All' : filter.value}
+                  <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`}></span>
+                  {degree}
                 </button>
               ))}
             </div>
 
-            {/* Results count */}
-            {(searchQuery || degreeFilter !== 'all') && (
-              <div className="text-[12px] font-medium text-gray-500 shrink-0">
-                {totalResults} program{totalResults !== 1 ? 's' : ''} found
-              </div>
-            )}
+            {/* View toggle */}
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('mosaic')}
+                className={`px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-all ${viewMode === 'mosaic' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              >
+                Mosaic
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-all ${viewMode === 'list' ? 'bg-gray-900 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+              >
+                List
+              </button>
+            </div>
           </div>
+
+          {/* Results count */}
+          {(searchQuery || degreeFilter !== 'all') && (
+            <div className="mt-2 text-[12px] font-medium text-gray-500">
+              {totalFiltered} program{totalFiltered !== 1 ? 's' : ''} found
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── Catalogue Quick Nav + Introduction ── */}
-      <section className="max-w-[1400px] mx-auto w-full px-8 lg:px-20 py-16 lg:py-24">
-        <div
-          ref={introAnim.ref}
-          className={`transition-all duration-700 ${introAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
-        >
-          <div className="mb-6 flex items-center space-x-3">
-            <span className="w-8 h-[1px] bg-[#8A0000]"></span>
-            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">
-              The Catalogue
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-            {/* Left — Introduction */}
-            <div>
-              <h2 className="text-[36px] md:text-[42px] font-extrabold leading-[1.05] tracking-tighter text-[#141414] mb-8">
-                Majors in Artemis College
-              </h2>
-              <p className="text-[16px] text-gray-600 leading-relaxed mb-4">
-                Artemis College offers undergraduate majors across seven interdisciplinary schools — each designed to prepare students for a world that demands both deep expertise and broad adaptability. Every major is built on a common foundation of critical thinking, ethical reasoning, and global perspective.
-              </p>
-              <p className="text-[16px] text-gray-600 leading-relaxed">
-                Students declare a major by the end of their second year, with the flexibility to combine fields through double majors, minors, and certificates. All programmes lead to the same globally recognised Artemis degree, regardless of which college node you attend.
-              </p>
-
-              {/* Stats row */}
-              <div className="mt-8 flex gap-8">
-                <div>
-                  <div className="text-[28px] font-black text-[#8A0000]">{TOTAL_MAJORS}+</div>
-                  <div className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Programs</div>
-                </div>
-                <div>
-                  <div className="text-[28px] font-black text-[#8A0000]">7</div>
-                  <div className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Schools</div>
-                </div>
-                <div>
-                  <div className="text-[28px] font-black text-[#8A0000]">35</div>
-                  <div className="text-[12px] font-bold uppercase tracking-wider text-gray-500">Countries</div>
-                </div>
+      {/* ── Main Explorer: School tabs + Program display ── */}
+      <section className="py-8 lg:py-12">
+        <div className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20">
+          {globalResults ? (
+            /* ── Global search results ── */
+            <div className="space-y-8">
+              <div className="flex items-center gap-3 mb-2">
+                <Search className="w-5 h-5 text-[#8A0000]" />
+                <h2 className="text-[20px] font-bold text-[#141414]">Search Results</h2>
               </div>
-            </div>
-
-            {/* Right — Catalogue Quick Navigation */}
-            <div className="pt-4">
-              <div className="text-[10px] font-bold uppercase tracking-[0.3em] text-gray-400 mb-6">Quick Navigation</div>
-              <ul className="space-y-0">
-                {catalogNav.map((item, i) => (
-                  <li key={i}>
+              {globalResults.map(school => {
+                const Icon = SCHOOL_ICONS[school.id] || Sparkles;
+                return (
+                  <div key={school.id}>
                     <button
-                      className={`w-full text-left py-3 text-[15px] border-t border-gray-100 hover:text-[#8A0000] transition-colors ${item === 'Majors in Artemis College' ? 'text-[#8A0000] font-bold' : 'text-[#141414]'}`}
-                      onClick={() => {
-                        if (item === 'Majors in Artemis College') {
-                          // Already on this page
-                        } else if (item === 'The Undergraduate Curriculum') {
-                          goToPage('undergraduate_curriculum');
-                        } else {
-                          goToPage('catalog_page', item);
-                        }
-                      }}
+                      onClick={() => { setSearchQuery(''); setActiveSchoolId(school.id); }}
+                      className="flex items-center gap-2 mb-4 group"
                     >
-                      {item}
+                      <Icon className="w-4 h-4 text-[#8A0000]" />
+                      <span className="text-[14px] font-bold text-gray-900 group-hover:text-[#8A0000] transition-colors">{school.heading}</span>
+                      <span className="text-[11px] text-gray-400">({school.matches.length})</span>
                     </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── School Sections (alternating white/gray-50) ── */}
-      {filteredSections.length === 0 ? (
-        <section className="py-24 text-center">
-          <div className="max-w-md mx-auto px-8">
-            <svg className="w-16 h-16 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <h3 className="text-[20px] font-bold text-[#141414] mb-2">No programs found</h3>
-            <p className="text-[15px] text-gray-500 mb-6">Try adjusting your search or filter criteria.</p>
-            <button
-              onClick={() => { setSearchQuery(''); setDegreeFilter('all'); }}
-              className="px-6 py-3 bg-[#8A0000] text-white text-[12px] font-bold uppercase tracking-widest hover:bg-[#6B0000] transition-colors"
-            >
-              Clear Filters
-            </button>
-          </div>
-        </section>
-      ) : (
-        filteredSections.map((section, idx) => {
-          const originalIdx = schoolSections.findIndex(s => s.id === section.id);
-          return (
-            <section
-              key={section.id}
-              id={section.id}
-              className={`scroll-mt-[110px] py-16 lg:py-24 ${originalIdx % 2 === 1 ? 'bg-gray-50' : 'bg-white'}`}
-            >
-              <div className="max-w-[1400px] mx-auto w-full px-8 lg:px-20">
-                {/* Section divider */}
-                <div className="relative flex items-center mb-12">
-                  <div className="flex-grow border-t border-gray-200"></div>
-                  <span className="mx-4 text-[12px] font-bold uppercase tracking-[0.2em] text-gray-500">
-                    {String(originalIdx + 1).padStart(2, '0')} — {section.label}
-                  </span>
-                  <div className="flex-grow border-t border-gray-200"></div>
-                </div>
-
-                <h2 className="text-[36px] md:text-[42px] font-extrabold leading-[1.05] tracking-tighter text-[#141414] mb-6">
-                  {section.heading}
-                </h2>
-
-                <p className="text-[16px] text-gray-600 leading-relaxed mb-10 max-w-3xl">
-                  {section.desc}
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
-                  {section.filteredMajors.map((major, i) => {
-                    const degrees = major.includes("B.S.") ? "B.S." : major.includes("B.F.A.") ? "B.F.A." : major.includes("B.A.") ? "B.A." : "Degree";
-                    const cleanMajor = major.replace(" (B.S.)", "").replace(" (B.A.)", "").replace(" (B.F.A.)", "");
-                    // Determinant pseudo-random image for variety based on index
-                    const images = [
-                      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=600",
-                      "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=600",
-                      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=600",
-                      "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=600",
-                      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600",
-                      "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=600",
-                    ];
-                    const image = images[(i + originalIdx) % images.length];
-
-                    return (
-                    <div 
-                      key={i}
-                      className="group cursor-pointer bg-white border border-gray-100/80 shadow-sm hover:shadow-lg hover:border-[#8A0000]/30 transition-all duration-400 ease-out flex flex-col rounded-sm overflow-hidden"
-                    >
-                      <div className="relative h-32 overflow-hidden bg-gray-50 flex shrink-0" onClick={() => goToPage('program_detail', major)}>
-                        <img src={image} 
-                          alt={cleanMajor}
-                          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out"
-                          referrerPolicy="no-referrer" loading="lazy"/>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                        <div className="absolute bottom-3 left-3 right-3 text-white flex items-center justify-between">
-                          <span className="text-[10px] font-mono uppercase bg-black group-hover:bg-[#8A0000] px-2 py-0.5 tracking-wider font-semibold transition-colors">
-                            {degrees}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 flex flex-col flex-1 relative">
-                        <button
-                          onClick={() => goToPage('program_detail', major)}
-                          className="text-left text-[14px] font-bold text-gray-900 group-hover:text-[#8A0000] uppercase tracking-tight leading-snug transition-colors mb-2 line-clamp-2 min-h-[40px]"
-                        >
-                          {cleanMajor}
-                        </button>
-                        
-                        <p className="text-[11px] text-gray-500 leading-relaxed font-light mb-4 flex-1 line-clamp-3">
-                          The study and application of principles in {cleanMajor} to solve global challenges through interdisciplinary research and practice.
-                        </p>
-
-                        <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <button
-                            onClick={() => toggleCompare(major)}
-                            className={`text-[8px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1.5 ${selectedPrograms.includes(major) ? 'text-[#8A0000]' : 'text-gray-400 hover:text-[#8A0000]'}`}
-                          >
-                            <span className={`w-1 h-1 rounded-full ${selectedPrograms.includes(major) ? 'bg-[#8A0000]' : 'bg-gray-300'}`}></span>
-                            {selectedPrograms.includes(major) ? 'Remove' : 'Compare'}
-                          </button>
-                          <button
-                            onClick={() => goToPage('program_detail', major)}
-                            className="text-[9px] font-mono uppercase tracking-widest text-[#8A0000] font-bold hover:underline"
-                          >
-                            View
-                          </button>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {school.matches.map((major, i) => (
+                        <ProgramTile key={i} major={major} index={i} onClick={() => goToPage('program_detail', major)} compact />
+                      ))}
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* ── Two-panel explorer ── */
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-8">
+              {/* ── Left: School selector (vertical tabs) ── */}
+              <aside className="lg:sticky lg:top-[180px] lg:self-start">
+                <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-gray-400 mb-3 px-2">Schools</div>
+                <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible hide-scrollbar pb-2 lg:pb-0">
+                  {schoolSections.map((school, i) => {
+                    const Icon = SCHOOL_ICONS[school.id] || Sparkles;
+                    const isActive = activeSchoolId === school.id;
+                    return (
+                      <button
+                        key={school.id}
+                        onClick={() => setActiveSchoolId(school.id)}
+                        className={`group flex items-center gap-3 px-4 py-3 rounded-xl border transition-all whitespace-nowrap lg:whitespace-normal text-left ${
+                          isActive
+                            ? 'bg-[#8A0000] text-white border-[#8A0000] shadow-lg shadow-[#8A0000]/20'
+                            : 'bg-white text-gray-700 border-gray-200 hover:border-[#8A0000]/40 hover:shadow-sm'
+                        }`}
+                      >
+                        <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-[#8A0000]'}`} />
+                        <div className="min-w-0">
+                          <div className="text-[13px] font-bold leading-tight truncate">{school.label}</div>
+                          <div className={`text-[10px] font-mono ${isActive ? 'text-white/60' : 'text-gray-400'}`}>
+                            {school.majors.length} programs
+                          </div>
+                        </div>
+                        {isActive && (
+                          <span className="hidden lg:block ml-auto text-[10px] font-mono text-white/40">
+                            {String(i + 1).padStart(2, '0')}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
-                {/* CTA for this school */}
-                <div className="mt-10 pt-8 border-t border-gray-100">
+                {/* Apply CTA */}
+                <div className="hidden lg:block mt-6 p-5 bg-[#141414] text-white rounded-xl">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-[#8A0000] mb-2">Ready?</div>
+                  <p className="text-[13px] text-gray-300 leading-relaxed mb-4">Apply to {activeSchool.label} and join the next cohort.</p>
                   <button
                     onClick={() => goToPage('apply')}
-                    className="inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-[#8A0000] hover:underline transition-all"
+                    className="w-full px-4 py-2.5 bg-white text-[#141414] text-[11px] font-bold uppercase tracking-widest hover:bg-[#8A0000] hover:text-white transition-colors"
                   >
-                    Apply to {section.label}
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                    Apply Now
                   </button>
                 </div>
+              </aside>
+
+              {/* ── Right: Active school's programs ── */}
+              <div className="min-w-0">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeSchoolId + viewMode}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {/* School header */}
+                    <div className="mb-6 pb-6 border-b border-gray-200">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#8A0000]/10 text-[#8A0000] flex items-center justify-center">
+                          <ActiveIcon className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="text-[10px] font-mono uppercase tracking-widest text-gray-400">
+                            School {String(schoolSections.findIndex(s => s.id === activeSchoolId) + 1).padStart(2, '0')}
+                          </div>
+                          <h2 className="text-[24px] md:text-[28px] font-extrabold tracking-tighter text-[#141414] leading-tight">
+                            {activeSchool.heading}
+                          </h2>
+                        </div>
+                      </div>
+                      <p className="text-[14px] text-gray-600 leading-relaxed max-w-3xl">{activeSchool.desc}</p>
+                    </div>
+
+                    {/* Programs display */}
+                    {filteredMajors.length === 0 ? (
+                      <div className="py-16 text-center">
+                        <p className="text-[14px] text-gray-400">No programs match your filters in this school.</p>
+                        <button
+                          onClick={() => { setSearchQuery(''); setDegreeFilter('all'); }}
+                          className="mt-4 text-[12px] font-bold uppercase tracking-widest text-[#8A0000] hover:underline"
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    ) : viewMode === 'mosaic' ? (
+                      /* ── Mosaic view: featured first program + grid ── */
+                      <div className="space-y-4">
+                        {/* Featured program */}
+                        {filteredMajors[0] && (
+                          <div
+                            onClick={() => goToPage('program_detail', filteredMajors[0])}
+                            className="group cursor-pointer relative h-44 sm:h-52 rounded-2xl overflow-hidden border border-gray-200 hover:border-[#8A0000]/40 hover:shadow-xl transition-all"
+                          >
+                            <img
+                              src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=1200"
+                              alt={cleanMajor(filteredMajors[0])}
+                              className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                              loading="lazy"
+                              referrerPolicy="no-referrer"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+                            <div className="relative z-10 h-full flex flex-col justify-center p-6 sm:p-8 max-w-md">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#8A0000] text-white">
+                                  Featured
+                                </span>
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-white/20 text-white backdrop-blur-sm">
+                                  {getDegree(filteredMajors[0])}
+                                </span>
+                              </div>
+                              <h3 className="text-[22px] sm:text-[26px] font-extrabold text-white leading-tight mb-2">
+                                {cleanMajor(filteredMajors[0])}
+                              </h3>
+                              <p className="text-[12px] text-white/70 leading-relaxed mb-3 line-clamp-2">
+                                The study and application of {cleanMajor(filteredMajors[0]).toLowerCase()} to solve global challenges through interdisciplinary research and practice.
+                              </p>
+                              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-white group-hover:text-[#D4A853] transition-colors">
+                                Explore Program <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Remaining programs as tiles */}
+                        {filteredMajors.length > 1 && (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {filteredMajors.slice(1).map((major, i) => (
+                              <ProgramTile
+                                key={i}
+                                major={major}
+                                index={i + 1}
+                                onClick={() => goToPage('program_detail', major)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* ── List view ── */
+                      <div className="space-y-0">
+                        {filteredMajors.map((major, i) => {
+                          const degree = getDegree(major);
+                          const colors = DEGREE_COLORS[degree];
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => goToPage('program_detail', major)}
+                              className="group w-full flex items-center gap-4 py-4 border-b border-gray-100 hover:border-[#8A0000]/30 transition-colors text-left"
+                            >
+                              <span className="text-[10px] font-mono text-gray-300 w-6 shrink-0">
+                                {String(i + 1).padStart(2, '0')}
+                              </span>
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`}></span>
+                              <span className="flex-1 text-[15px] font-bold text-gray-900 group-hover:text-[#8A0000] transition-colors truncate">
+                                {cleanMajor(major)}
+                              </span>
+                              <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${colors.bg} ${colors.text} shrink-0`}>
+                                {degree}
+                              </span>
+                              <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#8A0000] group-hover:translate-x-1 transition-all shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* School footer */}
+                    <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
+                      <span className="text-[12px] text-gray-400 font-mono">
+                        {filteredMajors.length} of {activeSchool.majors.length} programs shown
+                      </span>
+                      <button
+                        onClick={() => goToPage('apply')}
+                        className="inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-widest text-[#8A0000] hover:underline transition-all"
+                      >
+                        Apply to {activeSchool.label}
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
-            </section>
-          );
-        })
-      )}
-
-      {/* ── SubPageFooter ── */}
-      <SubPageFooter goToPage={goToPage} />
-
-      {/* Floating Compare Bar */}
-      {selectedPrograms.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-[#141414] text-white p-4 flex items-center justify-between z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
-           <div className="max-w-[1400px] w-full mx-auto px-4 lg:px-16 flex items-center justify-between">
-             <div className="text-[13px] font-bold">
-               Comparing {selectedPrograms.length}/3 Programs
-             </div>
-             <div className="flex gap-4">
-               <button onClick={() => setSelectedPrograms([])} className="px-4 py-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 hover:text-white transition-colors">Clear</button>
-               <button onClick={() => setIsComparing(true)} className="px-6 py-2 bg-[#8A0000] hover:bg-[#6B0000] text-white text-[11px] font-bold uppercase tracking-wider transition-colors">View Comparison</button>
-             </div>
-           </div>
+            </div>
+          )}
         </div>
-      )}
+      </section>
 
-      {/* Comparison Modal */}
-      {isComparing && (
-        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 lg:p-10 backdrop-blur-sm">
-          <div className="bg-white max-w-5xl w-full p-8 lg:p-12 relative overflow-y-auto max-h-[90vh]">
-             <button onClick={() => setIsComparing(false)} className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors">
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-             </button>
-             <h2 className="text-[32px] font-extrabold tracking-tighter text-[#141414] mb-8">Program Comparison</h2>
-             <div className="overflow-x-auto">
-               <table className="w-full text-left border-collapse min-w-[700px]">
-                 <thead>
-                   <tr>
-                     <th className="p-5 border-b-2 border-gray-900 text-[12px] font-bold uppercase tracking-wider text-gray-500 w-[20%]">Feature</th>
-                     {selectedPrograms.map(p => (
-                       <th key={p} className="p-5 border-b-2 border-gray-900 text-[18px] font-bold text-[#141414] leading-tight w-[26%]">
-                         {p}
-                       </th>
-                     ))}
-                   </tr>
-                 </thead>
-                 <tbody>
-                   <tr>
-                     <td className="p-5 border-b border-gray-200 font-bold text-[11px] uppercase tracking-wider text-gray-500">Core Focus</td>
-                     {selectedPrograms.map(p => (
-                       <td key={p} className="p-5 border-b border-gray-200 text-[14px] text-gray-700 leading-relaxed">
-                         The study and application of principles in <strong>{p.replace(' (B.S.)','').replace(' (B.A.)','').replace(' (B.F.A.)','')}</strong> to solve global challenges through interdisciplinary research and practice.
-                       </td>
-                     ))}
-                   </tr>
-                   <tr>
-                     <td className="p-5 border-b border-gray-200 font-bold text-[11px] uppercase tracking-wider text-gray-500">Credit Requirements</td>
-                     {selectedPrograms.map(p => (
-                       <td key={p} className="p-5 border-b border-gray-200 text-[14px] text-gray-700 leading-relaxed">
-                         120 Credits Total<br />
-                         <span className="text-gray-500 text-[12px]">• 60 Foundation Core<br />• 40 Major Field<br />• 20 Electives/Minor</span>
-                       </td>
-                     ))}
-                   </tr>
-                   <tr>
-                     <td className="p-5 border-b border-gray-200 font-bold text-[11px] uppercase tracking-wider text-gray-500">Duration</td>
-                     {selectedPrograms.map(p => (
-                       <td key={p} className="p-5 border-b border-gray-200 text-[14px] text-gray-700">8 Semesters (4 Years)</td>
-                     ))}
-                   </tr>
-                 </tbody>
-               </table>
-             </div>
+      {/* ── DARK CTA BAND ── */}
+      <section className="bg-[#141414] text-white py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            <div className="mb-4 flex items-center space-x-3">
+              <span className="w-8 h-[1px] bg-[#8A0000]"></span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">Can't Decide?</span>
+            </div>
+            <h2 className="text-[28px] md:text-[36px] font-extrabold leading-[1.05] tracking-tighter mb-3">
+              Browse all programs. Find your field.
+            </h2>
+            <p className="text-[15px] text-gray-400 leading-relaxed">
+              Every program comes with a full 4-year curriculum, learning outcomes, faculty, and career paths. Start exploring — or apply and decide later.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <button
+              onClick={() => goToPage('apply')}
+              className="px-6 py-3 bg-white text-[#141414] text-[11px] font-bold uppercase tracking-widest hover:bg-[#8A0000] hover:text-white transition-colors"
+            >
+              Apply Now
+            </button>
+            <button
+              onClick={() => goToPage('prototype-pathways')}
+              className="px-6 py-3 border border-white/30 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors"
+            >
+              Prototype Pathways
+            </button>
           </div>
         </div>
-      )}
+      </section>
+
+      <SubPageFooter goToPage={goToPage} />
     </div>
+  );
+}
+
+/* ─── Program Tile (compact card for mosaic view) ─── */
+function ProgramTile({ major, index, onClick, compact }: { major: string; index: number; onClick: () => void; compact?: boolean }) {
+  const degree = getDegree(major);
+  const colors = DEGREE_COLORS[degree];
+  const name = cleanMajor(major);
+
+  const images = [
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&q=80&w=400',
+    'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=400',
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&q=80&w=400',
+    'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=400',
+    'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=400',
+  ];
+  const image = images[index % images.length];
+
+  if (compact) {
+    return (
+      <button
+        onClick={onClick}
+        className="group flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-[#8A0000]/40 hover:shadow-md transition-all text-left"
+      >
+        <span className={`w-2 h-2 rounded-full shrink-0 ${colors.dot}`}></span>
+        <span className="flex-1 text-[13px] font-bold text-gray-900 group-hover:text-[#8A0000] transition-colors truncate">{name}</span>
+        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${colors.bg} ${colors.text} shrink-0`}>{degree}</span>
+        <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-[#8A0000] transition-colors shrink-0" />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#8A0000]/40 hover:shadow-lg transition-all text-left flex flex-col"
+    >
+      {/* Image */}
+      <div className="relative h-24 overflow-hidden bg-gray-100 shrink-0">
+        <img
+          src={image}
+          alt={name}
+          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <span className={`absolute top-2 left-2 text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${colors.bg} ${colors.text} backdrop-blur-sm`}>
+          {degree}
+        </span>
+      </div>
+      {/* Body */}
+      <div className="p-3 flex-1 flex flex-col">
+        <span className="text-[12px] font-bold text-gray-900 group-hover:text-[#8A0000] transition-colors leading-tight line-clamp-2 min-h-[30px]">
+          {name}
+        </span>
+      </div>
+    </button>
   );
 }
