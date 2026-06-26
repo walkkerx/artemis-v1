@@ -32,11 +32,11 @@ function useInView(threshold = 0.15) {
 
 /* ─── Data ─── */
 const COMPENSATION_TABLE = [
-  { title: 'Distinguished Professor', base: '$36,000/yr', london: '$48,600', nairobi: '$37,800', kampala: '$36,000' },
-  { title: 'Professor', base: '$30,000/yr', london: '$40,500', nairobi: '$31,500', kampala: '$30,000' },
-  { title: 'Associate Professor', base: '$24,000/yr', london: '$32,400', nairobi: '$25,200', kampala: '$24,000' },
-  { title: 'Assistant Professor', base: '$18,000/yr', london: '$24,300', nairobi: '$18,900', kampala: '$18,000' },
-  { title: 'Assistant Teaching Professor', base: '$12,000/yr', london: '$16,200', nairobi: '$12,600', kampala: '$12,000' },
+  { title: 'Founding Scholar', base: '$36,000/yr', london: '$48,600', nairobi: '$37,800', kampala: '$36,000' },
+  { title: 'Distinguished Scholar', base: '$30,000/yr', london: '$40,500', nairobi: '$31,500', kampala: '$30,000' },
+  { title: 'Senior Instructional Fellow', base: '$24,000/yr', london: '$32,400', nairobi: '$25,200', kampala: '$24,000' },
+  { title: 'Research Fellow', base: '$18,000/yr', london: '$24,300', nairobi: '$18,900', kampala: '$18,000' },
+  { title: 'Instructional Fellow', base: '$12,000/yr', london: '$16,200', nairobi: '$12,600', kampala: '$12,000' },
 ];
 
 const DIVISIONS = [
@@ -65,8 +65,8 @@ const COLLEGE_LOCATIONS = [
 const JOB_LISTINGS = [
   {
     id: 'dh-div-i',
-    title: 'Division Head — Humanities & Social Sciences',
-    rank: 'Distinguished Professor',
+    title: 'Division Provost — Humanities & Social Sciences',
+    rank: 'Founding Scholar',
     division: 'div-i',
     type: 'Full-time · Permanent',
     locations: ['Venice', 'London', 'Berlin'],
@@ -90,8 +90,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'dh-div-ii',
-    title: 'Division Head — Natural Sciences & Mathematics',
-    rank: 'Distinguished Professor',
+    title: 'Division Provost — Natural Sciences & Mathematics',
+    rank: 'Founding Scholar',
     division: 'div-ii',
     type: 'Full-time · Permanent',
     locations: ['Venice', 'Tokyo', 'Singapore'],
@@ -115,8 +115,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'dh-div-iii',
-    title: 'Division Head — Engineering & Technology',
-    rank: 'Distinguished Professor',
+    title: 'Division Provost — Engineering & Technology',
+    rank: 'Founding Scholar',
     division: 'div-iii',
     type: 'Full-time · Permanent',
     locations: ['Venice', 'Seoul', 'Toronto'],
@@ -140,8 +140,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'dh-div-iv',
-    title: 'Division Head — Business, Policy & Global Affairs',
-    rank: 'Distinguished Professor',
+    title: 'Division Provost — Business, Policy & Global Affairs',
+    rank: 'Founding Scholar',
     division: 'div-iv',
     type: 'Full-time · Permanent',
     locations: ['Venice', 'London', 'Dubai'],
@@ -165,8 +165,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'dh-div-v',
-    title: 'Division Head — Health & Life Sciences',
-    rank: 'Distinguished Professor',
+    title: 'Division Provost — Health & Life Sciences',
+    rank: 'Founding Scholar',
     division: 'div-v',
     type: 'Full-time · Permanent',
     locations: ['Venice', 'Cape Town', 'Nairobi'],
@@ -190,8 +190,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'prof-center',
-    title: 'Professor & Center Director',
-    rank: 'Professor',
+    title: 'Center Director & Distinguished Scholar',
+    rank: 'Distinguished Scholar',
     division: 'all',
     type: 'Full-time · Permanent',
     locations: ['Multiple locations across 35 countries'],
@@ -210,13 +210,13 @@ const JOB_LISTINGS = [
       'Commitment to open knowledge (7-year public domain rule)',
     ],
     stipend: '$30,000/yr base (location-adjusted)',
-    reports: 'Division Head',
+    reports: 'Division Provost',
     open: 15,
   },
   {
     id: 'assoc-prof',
-    title: 'Associate Professor',
-    rank: 'Associate Professor',
+    title: 'Senior Instructional Fellow',
+    rank: 'Senior Instructional Fellow',
     division: 'all',
     type: 'Full-time · Permanent',
     locations: ['Multiple locations across 35 countries'],
@@ -240,8 +240,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'asst-prof',
-    title: 'Assistant Professor — Research Faculty',
-    rank: 'Assistant Professor',
+    title: 'Research Fellow',
+    rank: 'Research Fellow',
     division: 'all',
     type: 'Full-time · Permanent',
     locations: ['Multiple locations across 35 countries'],
@@ -265,8 +265,8 @@ const JOB_LISTINGS = [
   },
   {
     id: 'atp',
-    title: 'Assistant Teaching Professor',
-    rank: 'Assistant Teaching Professor',
+    title: 'Instructional Fellow',
+    rank: 'Instructional Fellow',
     division: 'all',
     type: 'Full-time · Permanent',
     locations: ['Multiple locations across 35 countries'],
@@ -503,10 +503,11 @@ const BENEFITS = [
 
 /* ─── Rank badge color helper ─── */
 function rankColor(rank: string) {
-  if (rank === 'Distinguished Professor') return { bg: 'bg-[#8A0000]', text: 'text-white' };
-  if (rank === 'Professor') return { bg: 'bg-[#6B0000]', text: 'text-white' };
-  if (rank === 'Associate Professor') return { bg: 'bg-[#4a0e0e]', text: 'text-white' };
-  if (rank === 'Assistant Professor') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
+  if (rank === 'Founding Scholar') return { bg: 'bg-[#8A0000]', text: 'text-white' };
+  if (rank === 'Distinguished Scholar') return { bg: 'bg-[#6B0000]', text: 'text-white' };
+  if (rank === 'Senior Instructional Fellow') return { bg: 'bg-[#4a0e0e]', text: 'text-white' };
+  if (rank === 'Research Fellow') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
+  if (rank === 'Instructional Fellow') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
   if (rank === 'Executive') return { bg: 'bg-[#8A0000]', text: 'text-white' };
   if (rank === 'Director') return { bg: 'bg-[#6B0000]', text: 'text-white' };
   if (rank === 'Engineer') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
@@ -567,7 +568,7 @@ export default function CareersPage({ goToPage }: Props) {
                   Build Artemis From Scratch
                 </h1>
                 <p className="text-[18px] text-white/70 max-w-xl leading-relaxed font-light">
-                  We are staffing every role — from Division Heads to founding faculty, from operations to admissions, from tech to finance. This is not joining a university. This is building one.
+                  We are staffing every role — from Division Provosts to founding faculty, from operations to admissions, from tech to finance. This is not joining a university. This is building one.
                 </p>
               </div>
             </div>
@@ -941,7 +942,7 @@ export default function CareersPage({ goToPage }: Props) {
                   Five Divisions
                 </h2>
                 <p className="text-[17px] text-gray-600 leading-[1.75]">
-                  Each Division spans all 50 Colleges and is led by a Division Head who reports directly to the President. Together they cover the full breadth of human inquiry — from philosophy to physics, from business to biology. Explore the divisions to find where your expertise fits.
+                  Each Division spans all 50 Colleges and is led by a Division Provost who reports directly to the President. Together they cover the full breadth of human inquiry — from philosophy to physics, from business to biology. Explore the divisions to find where your expertise fits.
                 </p>
               </div>
               <div className="border-l-4 border-[#8A0000] pl-6 py-2">
