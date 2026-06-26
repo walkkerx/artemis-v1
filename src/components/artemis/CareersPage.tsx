@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SubPageFooter from '@/components/artemis/SubPageFooter';
 import OnThisPageNav, { useActiveSection } from '@/components/artemis/OnThisPageNav';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight, MapPin, Building2, Users, BookOpen,
   FlaskConical, Globe, Shield, Star, Crown, Mail,
@@ -290,6 +290,207 @@ const JOB_LISTINGS = [
     reports: 'College Director of Studies',
     open: 1560,
   },
+  // ─── Non-Academic / Operations Roles (Staffing from Scratch) ───
+  {
+    id: 'coo',
+    title: 'Chief Operating Officer',
+    rank: 'Executive',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'London'],
+    description: 'Build and run the operational backbone of a global university from scratch. Oversee admissions, enrollment, student services, IT, finance operations, and campus management across 50 colleges in 35 countries. You will design the systems that make a federated university actually function.',
+    responsibilities: [
+      'Design and implement operational systems for a distributed global university',
+      'Build and lead the operations team (admissions, student services, IT, finance, campus ops)',
+      'Establish processes for enrollment, compliance, accreditation support, and student lifecycle',
+      'Manage operational P&L across multiple countries and currencies',
+      'Report directly to the President and Board',
+    ],
+    requirements: [
+      '10+ years senior operations leadership, ideally in higher education or multi-country organizations',
+      'Experience scaling operations from zero (startup or new-division experience)',
+      'Understanding of accreditation, compliance, and regulatory frameworks in education',
+      'Global mindset — comfort operating across cultures, time zones, and legal systems',
+    ],
+    stipend: '$80,000/yr base (location-adjusted)',
+    reports: 'President',
+    open: 1,
+  },
+  {
+    id: 'cto',
+    title: 'Chief Technology Officer',
+    rank: 'Executive',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'Remote'],
+    description: 'Build the digital infrastructure of Artemis from scratch — the learning platform, the student information system, the credit ledger, the Commons publishing platform, and the AI tutor system. This is not maintaining legacy systems. This is architecting a university that runs on technology designed in 2026, not 1996.',
+    responsibilities: [
+      'Architect and build the Artemis digital platform (LMS, SIS, credit ledger, Commons)',
+      'Lead the engineering team (full-stack, mobile, AI/ML, infrastructure)',
+      'Design the AI tutor system integration across all courses',
+      'Ensure data security, privacy compliance (GDPR, etc.), and system reliability at global scale',
+      'Build the technology roadmap for Years 1-5',
+    ],
+    requirements: [
+      '10+ years technology leadership, including building platforms from scratch',
+      'Experience with AI/ML systems, educational technology, or large-scale web platforms',
+      'Ability to recruit and lead a distributed engineering team',
+      'Commitment to open-source and open-access principles',
+    ],
+    stipend: '$80,000/yr base (location-adjusted)',
+    reports: 'President',
+    open: 1,
+  },
+  {
+    id: 'dir-admissions',
+    title: 'Director of Admissions',
+    rank: 'Director',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'Nairobi', 'Singapore'],
+    description: 'Design and run the Artemis admissions process from scratch. Need-blind, globally accessible, portfolio-based. Build the systems that identify and recruit the best students from 35+ countries — and the processes that evaluate them fairly, without standardized tests.',
+    responsibilities: [
+      'Design the Artemis admissions process (need-blind, portfolio-based, no standardized tests)',
+      'Build and lead the admissions team across multiple regions',
+      'Develop recruitment strategies for 50 colleges in 35 countries',
+      'Establish evaluation rubrics, reader training, and fairness protocols',
+      'Manage the enrollment cycle and yield',
+    ],
+    requirements: [
+      '7+ years admissions leadership at a selective university',
+      'Experience with international admissions and need-based aid',
+      'Commitment to access, equity, and holistic review',
+      'Experience building admissions processes (not just running existing ones)',
+    ],
+    stipend: '$50,000/yr base (location-adjusted)',
+    reports: 'COO',
+    open: 1,
+  },
+  {
+    id: 'dir-finance',
+    title: 'Director of Finance',
+    rank: 'Director',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'London'],
+    description: 'Build the financial systems of a global university from scratch. Multi-currency, multi-country, with a $100M founding campaign underway. You will design the budgeting, reporting, and compliance systems that make Artemis financially credible to funders, regulators, and partners.',
+    responsibilities: [
+      'Design and implement financial systems (budgeting, accounting, reporting, audit)',
+      'Manage multi-currency, multi-country financial operations',
+      'Support the $100M founding campaign (donor reporting, restricted funds, endowment tracking)',
+      'Ensure compliance with Malta MFHEA and international financial regulations',
+      'Build the financial roadmap to sustainability',
+    ],
+    requirements: [
+      '7+ years finance leadership, ideally in higher education or international NGOs',
+      'CPA or equivalent qualification',
+      'Experience with multi-currency operations and international compliance',
+      'Experience building financial systems from scratch',
+    ],
+    stipend: '$50,000/yr base (location-adjusted)',
+    reports: 'COO',
+    open: 1,
+  },
+  {
+    id: 'dir-student-life',
+    title: 'Director of Student Life',
+    rank: 'Director',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'Nairobi'],
+    description: 'Design the Artemis student experience from scratch — residential life across 50 colleges, the six-city rotation, student wellbeing, clubs and societies, and the transition from student to alumni. You will define what it feels like to be an Artemis student.',
+    responsibilities: [
+      'Design and implement the student life framework across 50 colleges',
+      'Oversee residential life, student wellbeing, and counseling services',
+      'Build the six-city rotation logistics and student support systems',
+      'Establish clubs, societies, and student governance',
+      'Design the alumni transition and lifetime membership program',
+    ],
+    requirements: [
+      '7+ years student affairs leadership at a residential university',
+      'Experience with international student populations and cross-cultural programming',
+      'Understanding of student wellbeing, mental health, and crisis response',
+      'Experience building student life programs from scratch',
+    ],
+    stipend: '$45,000/yr base (location-adjusted)',
+    reports: 'COO',
+    open: 1,
+  },
+  {
+    id: 'dir-comms',
+    title: 'Director of Communications & Marketing',
+    rank: 'Director',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'London', 'Remote'],
+    description: 'Tell the Artemis story to the world. Build the brand, the digital presence, the media strategy, and the content engine from scratch. You will make Artemis the most talked-about university launch of the decade.',
+    responsibilities: [
+      'Build and lead the communications, marketing, and digital team',
+      'Develop the Artemis brand strategy and visual identity',
+      'Manage the website, social media, content marketing, and PR',
+      'Support student recruitment marketing and partner outreach',
+      'Build the Artemis Press and Commons publishing visibility',
+    ],
+    requirements: [
+      '7+ years communications/marketing leadership',
+      'Experience launching or rebranding an organization',
+      'Strong digital/media background (content, social, paid, organic)',
+      'Ability to work across cultures and languages',
+    ],
+    stipend: '$45,000/yr base (location-adjusted)',
+    reports: 'President',
+    open: 1,
+  },
+  {
+    id: 'eng-fullstack',
+    title: 'Senior Full-Stack Engineer',
+    rank: 'Engineer',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'Remote'],
+    description: 'Build the Artemis digital platform. Next.js, React, TypeScript, Prisma, Tailwind. You will work directly with the CTO to architect and ship the LMS, student information system, and Commons platform. This is greenfield — no legacy code, no technical debt, just you and the mission.',
+    responsibilities: [
+      'Architect and build the Artemis learning platform and student systems',
+      'Write clean, tested, maintainable TypeScript/React code',
+      'Design APIs and data models for a global, multi-tenant platform',
+      'Collaborate with the AI team on tutor integration',
+      'Mentor junior engineers as the team scales',
+    ],
+    requirements: [
+      '5+ years full-stack engineering (React/Next.js, Node.js, PostgreSQL)',
+      'Experience building production platforms from scratch',
+      'Strong TypeScript and API design skills',
+      'Interest in education technology and open access',
+    ],
+    stipend: '$40,000/yr base (location-adjusted)',
+    reports: 'CTO',
+    open: 5,
+  },
+  {
+    id: 'admissions-officer',
+    title: 'Admissions Officer (Multiple Regions)',
+    rank: 'Officer',
+    division: 'all',
+    type: 'Full-time · Permanent',
+    locations: ['Venice', 'Nairobi', 'Singapore', 'São Paulo', 'Vancouver'],
+    description: 'Be the face of Artemis in your region. Recruit students, review applications, conduct interviews, and build relationships with schools and communities. You will identify the students who will form the founding cohorts of a new kind of university.',
+    responsibilities: [
+      'Recruit students in your region through school visits, fairs, and digital outreach',
+      'Review applications and conduct admissions interviews',
+      'Build relationships with schools, counselors, and community organizations',
+      'Support admitted students through enrollment and onboarding',
+      'Represent Artemis at regional events and conferences',
+    ],
+    requirements: [
+      '3+ years admissions, recruitment, or education outreach experience',
+      'Deep knowledge of your regional education landscape',
+      'Ability to evaluate students holistically (no test scores)',
+      'Fluency in English plus the primary language of your region',
+    ],
+    stipend: '$25,000/yr base (location-adjusted)',
+    reports: 'Director of Admissions',
+    open: 10,
+  },
 ];
 
 const BENEFITS = [
@@ -306,11 +507,17 @@ function rankColor(rank: string) {
   if (rank === 'Professor') return { bg: 'bg-[#6B0000]', text: 'text-white' };
   if (rank === 'Associate Professor') return { bg: 'bg-[#4a0e0e]', text: 'text-white' };
   if (rank === 'Assistant Professor') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
+  if (rank === 'Executive') return { bg: 'bg-[#8A0000]', text: 'text-white' };
+  if (rank === 'Director') return { bg: 'bg-[#6B0000]', text: 'text-white' };
+  if (rank === 'Engineer') return { bg: 'bg-[#8A0000]/10', text: 'text-[#8A0000]' };
+  if (rank === 'Officer') return { bg: 'bg-gray-100', text: 'text-gray-600' };
   return { bg: 'bg-gray-100', text: 'text-gray-600' };
 }
 
 /* ─── Main Component ─── */
 export default function CareersPage({ goToPage }: Props) {
+  const { scrollY } = useScroll();
+  const heroY = useTransform(scrollY, [0, 500], [0, 150]);
   const activeSection = useActiveSection(['positions', 'compensation', 'divisions', 'locations', 'benefits', 'apply']);
   const [divisionFilter, setDivisionFilter] = useState<string>('all');
   const [selectedJob, setSelectedJob] = useState<string>(JOB_LISTINGS[0].id);
@@ -343,27 +550,27 @@ export default function CareersPage({ goToPage }: Props) {
           1. HERO
           ══════════════════════════════════════════ */}
       <section className="relative w-full overflow-hidden">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="relative w-full h-[45vh] min-h-[360px] overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1800"
-              alt="Work at Artemis"
-              className="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy"/>
+        <div className="relative w-full h-[52vh] min-h-[400px] overflow-hidden">
+          <motion.img src="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=1800"
+            alt="Work at Artemis"
+            style={{ y: heroY }}
+            className="absolute inset-x-0 -top-[20%] w-full h-[140%] object-cover grayscale"
+            referrerPolicy="no-referrer" loading="lazy"/>
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
             <div className="relative z-10 flex flex-col justify-end h-full max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 pb-16">
               <div ref={heroAnim.ref} className={`transition-all duration-700 ${heroAnim.visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <div className="mb-6 flex items-center space-x-3">
                   <span className="w-8 h-[1px] bg-[#8A0000]"></span>
-                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">2,000 Positions · 50 Colleges · 35 Countries</span>
+                  <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">Now Hiring · 2,000+ Positions · 50 Colleges · 35 Countries</span>
                 </div>
                 <h1 className="text-[32px] sm:text-[48px] md:text-[64px] font-extrabold leading-[1.05] tracking-tighter text-white mb-5">
-                  Work at Artemis
+                  Build Artemis From Scratch
                 </h1>
                 <p className="text-[18px] text-white/70 max-w-xl leading-relaxed font-light">
-                  Faculty positions across five divisions. A university built from first principles.
+                  We are staffing every role — from Division Heads to founding faculty, from operations to admissions, from tech to finance. This is not joining a university. This is building one.
                 </p>
               </div>
             </div>
-          </div>
         </div>
       </section>
 
@@ -956,6 +1163,32 @@ export default function CareersPage({ goToPage }: Props) {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── DARK CTA BAND ── */}
+      <section className="bg-[#141414] text-white py-16 lg:py-20">
+        <div className="max-w-[1400px] mx-auto w-full px-5 sm:px-8 lg:px-20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            <div className="mb-4 flex items-center space-x-3">
+              <span className="w-8 h-[1px] bg-[#8A0000]"></span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-[#8A0000]">Don't See Your Role?</span>
+            </div>
+            <h2 className="text-[28px] md:text-[36px] font-extrabold leading-[1.05] tracking-tighter mb-3">
+              We're building every team from scratch.
+            </h2>
+            <p className="text-[15px] text-gray-400 leading-relaxed">
+              If you believe in the mission and have skills to contribute — whether in academia, operations, technology, design, or anything else — reach out. We are staffing every function from zero. Send your story.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 shrink-0">
+            <button onClick={() => goToPage('apply')} className="px-6 py-3 bg-white text-[#141414] text-[11px] font-bold uppercase tracking-widest hover:bg-[#8A0000] hover:text-white transition-colors">
+              Apply Now
+            </button>
+            <button onClick={() => goToPage('contact-us')} className="px-6 py-3 border border-white/30 text-white text-[11px] font-bold uppercase tracking-widest hover:bg-white/10 transition-colors">
+              Reach Out
+            </button>
           </div>
         </div>
       </section>
