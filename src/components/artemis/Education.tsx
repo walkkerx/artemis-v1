@@ -51,7 +51,7 @@ const academicPrograms = [
     description: 'Explore the diverse programs available for non-matriculating students — from professional certificates to community learning initiatives.',
     image: 'https://images.unsplash.com/photo-1655720357872-ce227e4164ba?auto=format&fit=crop&q=80&w=600',
     linkText: 'Discover Non-Degree Options',
-    linkTarget: 'admissions',
+    linkTarget: 'programs',
   },
   {
     title: 'Online Learning',
@@ -65,21 +65,21 @@ const academicPrograms = [
     description: 'Artemis extends its educational philosophy to younger students through innovative K-12 programs that foster early intellectual development, cultivating curiosity and critical thinking from the earliest years of formal education.',
     image: 'https://images.unsplash.com/photo-1570616969692-54d6ba3d0397?auto=format&fit=crop&q=80&w=600',
     linkText: 'Explore K-12 Programs',
-    linkTarget: 'admissions',
+    linkTarget: 'education',
   },
   {
     title: 'Dual-Degree Pathway (P-TECH)',
     description: "Earn a university degree while still in high school. Modeled after the P-TECH initiative and inspired by Avenues: The World School, this pathway combines secondary and tertiary education into a seamless six-year program that awards both a high school diploma and an associate or bachelor's degree.",
     image: 'https://images.unsplash.com/photo-1624555130296-e551faf8969b?auto=format&fit=crop&q=80&w=600',
     linkText: 'Explore Dual-Degree',
-    linkTarget: 'admissions',
+    linkTarget: 'undergraduate',
   },
   {
-    title: 'Prototype Pathways',
-    description: 'Nine market-entry prototypes for building Artemis — modular, stackable strategies that activate the MAP-UBI flywheel. From Guest-to-Guild recruiting to Guild-as-Miniversity, the Collegiate Alliance, and the Open Core + Capstone model.',
+    title: 'Flagship Initiatives',
+    description: 'Nine foundational programs that define how Artemis enters the world — the talent funnel, the curriculum engine, the federated network, and the lean degree. Each is a self-contained pathway to building the university.',
     image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=600',
-    linkText: 'Explore Prototype Pathways',
-    linkTarget: 'prototype-pathways',
+    linkText: 'Explore Flagship Initiatives',
+    linkTarget: 'flagship-initiatives',
   },
 ];
 

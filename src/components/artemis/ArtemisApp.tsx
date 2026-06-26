@@ -28,7 +28,7 @@ import ProgramsOfStudy from '@/components/artemis/ProgramsOfStudy';
 
 import ProgramDetail from '@/components/artemis/ProgramDetail';
 import GraduatePrograms from '@/components/artemis/GraduatePrograms';
-import PrototypePathways from '@/components/artemis/PrototypePathways';
+import FlagshipInitiatives from '@/components/artemis/FlagshipInitiatives';
 import Apply from '@/components/artemis/Apply';
 import SchoolDetail from '@/components/artemis/SchoolDetail';
 import AdmissionsSubpage from '@/components/artemis/AdmissionsSubpage';
@@ -99,20 +99,20 @@ function getBreadcrumbs(currentPage: string, currentProgram: string): { items: B
         ],
         currentLabel: 'Programs of Study',
       };
-    case 'prototype-pathways':
+    case 'flagship-initiatives':
       return {
         items: [
           { label: 'Education', page: 'education' },
         ],
-        currentLabel: 'Prototype Pathways',
+        currentLabel: 'Flagship Initiatives',
       };
-    case 'prototype-detail':
+    case 'flagship-detail':
       return {
         items: [
           { label: 'Education', page: 'education' },
-          { label: 'Prototype Pathways', page: 'prototype-pathways' },
+          { label: 'Flagship Initiatives', page: 'flagship-initiatives' },
         ],
-        currentLabel: 'Prototype Detail',
+        currentLabel: 'Initiative Detail',
       };
     case 'centers-of-inquiry':
       return {
@@ -475,10 +475,10 @@ export default function ArtemisApp() {
         return <ProgramsOfStudy goToPage={goToPage} />;
       case 'program_detail':
         return <ProgramDetail goToPage={goToPage} programName={currentProgram} />;
-      case 'prototype-pathways':
-        return <PrototypePathways goToPage={goToPage} />;
-      case 'prototype-detail':
-        return <PrototypePathways goToPage={goToPage} prototypeId={currentProgram} />;
+      case 'flagship-initiatives':
+        return <FlagshipInitiatives goToPage={goToPage} />;
+      case 'flagship-detail':
+        return <FlagshipInitiatives goToPage={goToPage} initiativeId={currentProgram} />;
       case 'school_detail':
         return <SchoolDetail goToPage={goToPage} schoolName={currentProgram} />;
       case 'apply':
