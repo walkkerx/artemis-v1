@@ -45,7 +45,12 @@ export const metadata: Metadata = {
   creator: "University of Artemis",
   publisher: "University of Artemis",
   icons: {
-    icon: "/logo.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.ico", sizes: "16x16" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/logo.svg",
   },
   openGraph: {
     type: "website",
